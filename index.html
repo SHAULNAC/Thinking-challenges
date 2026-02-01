@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>מרוץ המכלול - Elite Edition</title>
+    <title>מרוץ המכלול - Elite Ultimate Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -20,6 +20,7 @@
             margin: 0; background: #f1f5f9; color: var(--primary); overflow-x: hidden;
         }
 
+        /* Header UI */
         #header { 
             position: sticky; top: 0; background: var(--primary); color: white; 
             padding: 12px 30px; display: flex; justify-content: space-between; 
@@ -28,7 +29,9 @@
 
         .stat-box { text-align: center; background: rgba(255,255,255,0.08); padding: 5px 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
         .stat-val { font-weight: 800; color: var(--accent); font-size: 1.2em; display: block; }
+        .sub-stat { font-size: 0.7em; color: #94a3b8; display: block; }
 
+        /* Main Content Area */
         #content-area { 
             max-width: 850px; margin: 30px auto; background: var(--glass); padding: 40px; 
             border-radius: 20px; box-shadow: var(--shadow); min-height: 80vh;
@@ -44,7 +47,7 @@
 
         #tracker-pointer {
             position: absolute; bottom: 0%; left: 50%; transform: translate(-50%, 50%);
-            width: 22px; height: 22px; background: #94a3b8; border-radius: 50%;
+            width: 24px; height: 24px; background: #94a3b8; border-radius: 50%;
             transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
             box-shadow: 0 0 15px rgba(0,0,0,0.3);
             border: 3px solid white;
@@ -52,13 +55,12 @@
 
         #distance-tag {
             position: absolute; left: 35px; top: 50%; transform: translateY(-50%);
-            white-space: nowrap; font-weight: 800; padding: 5px 12px;
+            white-space: nowrap; font-weight: 800; padding: 6px 14px;
             border-radius: 20px; color: white; background: var(--primary);
-            font-size: 0.85em; opacity: 0; transition: 0.4s;
-            box-shadow: var(--shadow);
+            font-size: 0.9em; opacity: 0; transition: 0.4s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
-        /* מצבים דרמטיים */
         .dist-2 #tracker-pointer { bottom: 50%; background: var(--gold); box-shadow: 0 0 25px var(--gold); animation: pulse 1.5s infinite; }
         .dist-1 #tracker-pointer { bottom: 100%; background: var(--danger); box-shadow: 0 0 35px var(--danger); animation: pulse 0.6s infinite; }
         .dist-active #distance-tag { opacity: 1; }
@@ -69,28 +71,42 @@
             100% { transform: translate(-50%, 50%) scale(1); }
         }
 
+        /* מסך ניצחון מונפש ויוקרתי */
         #win-screen {
-            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(15px); display: none; flex-direction: column;
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px); display: none; flex-direction: column;
             justify-content: center; align-items: center; z-index: 5000; color: white;
+            animation: fadeIn 0.5s ease;
         }
 
+        .win-card {
+            background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+            padding: 60px; border-radius: 40px; border: 1px solid rgba(255,255,255,0.15);
+            text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            transform: translateY(30px); opacity: 0;
+            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideUp { to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
         .btn { 
-            background: var(--accent); color: white; border: none; padding: 12px 24px; 
-            cursor: pointer; border-radius: 10px; font-weight: bold; transition: 0.3s;
+            background: var(--accent); color: white; border: none; padding: 14px 28px; 
+            cursor: pointer; border-radius: 12px; font-weight: bold; transition: 0.3s;
         }
-        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
-        
-        input { 
-            width: 85%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd;
-            font-family: inherit; font-size: 1em;
-        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4); }
 
         .overlay-card {
             text-align:center; width:450px; padding:40px; background:rgba(255,255,255,0.05); 
             border-radius:24px; border:1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
         }
 
+        input { 
+            width: 85%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd;
+            font-family: inherit; font-size: 1em;
+        }
+
+        .hidden { display: none; }
         .mw-editsection, .noprint, .ambox, .infobox, .navbox, .hatnote { display: none !important; }
     </style>
 </head>
@@ -103,9 +119,9 @@
     </div>
     
     <div style="display:flex; gap:15px;">
-        <div class="stat-box"><span class="sub-stat" style="font-size:0.7em; color:#94a3b8;">יעד</span><span id="target-label" class="stat-val">---</span></div>
-        <div class="stat-box"><span class="sub-stat" style="font-size:0.7em; color:#94a3b8;">צעדים</span><span id="click-count" class="stat-val">0</span></div>
-        <div class="stat-box"><span class="sub-stat" style="font-size:0.7em; color:#94a3b8;">זמן</span><span id="timer" class="stat-val">00:00</span></div>
+        <div class="stat-box"><span class="sub-stat">יעד</span><span id="target-label" class="stat-val">---</span></div>
+        <div class="stat-box"><span class="sub-stat">צעדים</span><span id="click-count" class="stat-val">0</span></div>
+        <div class="stat-box"><span class="sub-stat">זמן</span><span id="timer" class="stat-val">00:00</span></div>
     </div>
 
     <button id="hint-btn" class="btn" style="background: var(--gold);" onclick="useHint()">💡 רמז (<span id="hints-left">3</span>)</button>
@@ -120,10 +136,10 @@
 
 <div id="start-screen" style="position:fixed; inset:0; background:var(--primary); z-index:2000; display:flex; align-items:center; justify-content:center; color:white;">
     <div class="overlay-card">
-        <h1 style="font-size:3.5em; margin:0 0 10px 0; font-weight:800;">מרוץ המכלול</h1>
-        <p style="color:#94a3b8; margin-bottom:30px;">Elite Strategy Game</p>
+        <h1 style="font-size:3.5em; margin:0 0 10px 0; font-weight:800; letter-spacing:-1px;">מרוץ המכלול</h1>
+        <p style="color:#94a3b8; margin-bottom:30px;">Professional Elite Edition</p>
         
-        <div id="status-message" style="margin-bottom:20px; color:var(--gold); font-weight:600;"></div>
+        <div id="status-message" style="margin-bottom:20px; color:var(--gold); font-weight:600; min-height:1.2em;"></div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:40px;">
             <button class="btn" onclick="startExtreme(60)">קל</button>
@@ -133,25 +149,34 @@
 
         <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 25px;">
             <h3 style="margin:0 0 15px 0;">משחק מותאם אישית</h3>
-            <input type="text" id="custom-start" placeholder="ערך התחלה (למשל: ירושלים)">
-            <input type="text" id="custom-target" placeholder="ערך יעד (למשל: תלמוד)">
+            <input type="text" id="custom-start" placeholder="ערך התחלה">
+            <input type="text" id="custom-target" placeholder="ערך יעד">
             
             <div id="custom-validation" class="hidden" style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; margin-top:15px;">
                 <p id="validation-info" style="margin:0 0 10px 0;"></p>
-                <button class="btn" style="background:var(--success); width:100%;" onclick="confirmCustomGame()">התחל עכשיו</button>
+                <button class="btn" style="background:var(--success); width:100%;" onclick="confirmCustomGame()">התחל משחק</button>
                 <button class="btn" style="background:transparent; font-size:0.8em; margin-top:5px;" onclick="resetCustom()">שנה ערכים</button>
             </div>
             
             <button id="check-btn" class="btn" style="width:100%; margin-top:10px;" onclick="validateCustom()">בדוק רמת קושי</button>
         </div>
+
+        <div id="user-stats-main" style="margin-top:25px; font-size:0.85em; color:#94a3b8; padding:10px; border-radius:10px; background:rgba(255,255,255,0.02);"></div>
     </div>
 </div>
 
 <div id="win-screen">
-    <div class="overlay-card" style="background:rgba(16, 185, 129, 0.1); border-color:var(--success);">
-        <h1 style="font-size:4.5em; margin:0; color:var(--success);">🏆 מדהים!</h1>
-        <p id="win-summary" style="font-size:1.8em; margin:25px 0;"></p>
-        <button class="btn" style="padding:18px 50px; font-size:1.2em; background:var(--success);" onclick="location.reload()">שחק שוב</button>
+    <div class="win-card">
+        <div style="font-size: 5em; margin-bottom:10px; animation: bounce 2s infinite;">🏆</div>
+        <h1 style="font-size:4em; margin:0; background: linear-gradient(to bottom, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">ניצחון הירואי!</h1>
+        <p id="win-summary" style="font-size:1.6em; margin:20px 0; opacity:0.9;"></p>
+        
+        <div style="display:flex; gap:15px; justify-content:center; margin-bottom:40px;">
+            <div class="stat-box" style="padding:15px 25px;"><span class="sub-stat">ניצחונות</span><span id="stat-wins" class="stat-val" style="font-size:1.8em;">0</span></div>
+            <div class="stat-box" style="padding:15px 25px;"><span class="sub-stat">ממוצע צעדים</span><span id="stat-avg" class="stat-val" style="font-size:1.8em;">0</span></div>
+        </div>
+        
+        <button class="btn" style="padding:18px 60px; font-size:1.3em; background:var(--success);" onclick="location.reload()">לאתגר הבא</button>
     </div>
 </div>
 
@@ -159,13 +184,25 @@
     let clicks = 0, seconds = 0, timerInterval, targetTitle = "", historyStack = [], dist1Nodes = new Set();
     let hintsLeft = 3;
 
-    // לוגיקת משחק מותאם אישית עם בדיקה
+    // סטטיסטיקות מפורטות
+    let stats = JSON.parse(localStorage.getItem('hamichlol_pro_stats')) || {
+        totalWins: 0,
+        totalClicks: 0,
+        totalTime: 0
+    };
+
+    function updateStatsDisplay() {
+        const avg = stats.totalWins ? (stats.totalClicks / stats.totalWins).toFixed(1) : 0;
+        document.getElementById('user-stats-main').innerText = `סטטיסטיקה: ${stats.totalWins} ניצחונות | ממוצע ${avg} צעדים`;
+    }
+
+    // בדיקת קושי למותאם אישית
     async function validateCustom() {
         const start = document.getElementById('custom-start').value.trim();
         const target = document.getElementById('custom-target').value.trim();
-        if(!start || !target) return alert("מלא את שני הערכים");
+        if(!start || !target) return;
 
-        document.getElementById('check-btn').innerText = "...בודק";
+        document.getElementById('check-btn').innerText = "...סורק";
         try {
             const res = await fetch(`https://www.hamichlol.org.il/w/api.php?action=query&list=backlinks&bltitle=${encodeURIComponent(target)}&blnamespace=0&bllimit=250&format=json&origin=*`);
             const data = await res.json();
@@ -174,7 +211,7 @@
             document.getElementById('validation-info').innerHTML = `יעד: <b>${target}</b><br>קישורים נכנסים: <b>${count}</b>`;
             document.getElementById('custom-validation').classList.remove('hidden');
             document.getElementById('check-btn').classList.add('hidden');
-        } catch (e) { alert("שגיאה בבדיקה"); }
+        } catch (e) { alert("שגיאה בסריקה"); }
         document.getElementById('check-btn').innerText = "בדוק רמת קושי";
     }
 
@@ -187,7 +224,7 @@
         document.getElementById('check-btn').classList.remove('hidden');
     }
 
-    // ניהול המצפן/סמן
+    // ניהול סמן הקירבה
     async function prepareCompass(target) {
         const res = await fetch(`https://www.hamichlol.org.il/w/api.php?action=query&list=backlinks&bltitle=${encodeURIComponent(target)}&blnamespace=0&bllimit=200&format=json&origin=*`);
         const data = await res.json();
@@ -201,19 +238,19 @@
         
         if (dist1Nodes.has(title)) {
             tracker.classList.add('dist-1', 'dist-active');
-            tag.innerText = "מרחק 1: קישור ישיר ליעד!";
+            tag.innerText = "מרחק 1: יש קישור ישיר ליעד!";
             tag.style.background = 'var(--danger)';
         } else if (links.some(l => dist1Nodes.has(l))) {
             tracker.classList.add('dist-2', 'dist-active');
-            tag.innerText = "מרחק 2: היעד מעבר לפינה";
+            tag.innerText = "מרחק 2: היעד קרוב מאוד";
             tag.style.background = 'var(--gold)';
         }
     }
 
-    // פונקציות ליבה (זהות למקור עם תיקון באגים)
+    // פונקציות ליבה
     async function startExtreme(minLinks) {
         const status = document.getElementById('status-message');
-        status.innerText = "סורק ערכים...";
+        status.innerText = "מחפש יעד מאתגר...";
         try {
             const start = await getRandomArticle();
             let target = "", count = 0;
@@ -224,7 +261,7 @@
                 count = data.query.backlinks ? data.query.backlinks.length : 0;
             }
             setupGame(start, target);
-        } catch (e) { status.innerText = "שגיאה בחיבור למכלול"; }
+        } catch (e) { status.innerText = "שגיאת תקשורת"; }
     }
 
     function setupGame(start, target, isResume = false) {
@@ -255,7 +292,7 @@
                 if (current.toLowerCase() === targetTitle.toLowerCase()) win();
                 window.scrollTo(0,0);
             }
-        } catch (e) { area.innerText = "שגיאה בטעינת הדף"; }
+        } catch (e) { area.innerText = "שגיאה בטעינה"; }
         area.style.opacity = '1';
     }
 
@@ -263,13 +300,7 @@
         const link = e.target.closest('#content-area a');
         if (link) {
             e.preventDefault();
-            let title = "";
-            const href = link.getAttribute('href');
-            if (href && href.startsWith('/wiki/')) {
-                title = decodeURIComponent(href.replace('/wiki/', ''));
-            } else if (link.title) {
-                title = link.title;
-            }
+            let title = link.title || decodeURIComponent((link.getAttribute('href') || "").replace('/wiki/', ''));
             if (title && !title.includes(':')) {
                 clicks++;
                 document.getElementById('click-count').innerText = clicks;
@@ -287,7 +318,16 @@
     function win() {
         clearInterval(timerInterval);
         localStorage.removeItem('hamichlol_race_active');
-        document.getElementById('win-summary').innerText = `הגעת ליעד ב-${clicks} צעדים!`;
+        
+        // עדכון סטטיסטיקות
+        stats.totalWins++;
+        stats.totalClicks += clicks;
+        stats.totalTime += seconds;
+        localStorage.setItem('hamichlol_pro_stats', JSON.stringify(stats));
+
+        document.getElementById('win-summary').innerText = `הגעת אל "${targetTitle}" ב-${clicks} צעדים!`;
+        document.getElementById('stat-wins').innerText = stats.totalWins;
+        document.getElementById('stat-avg').innerText = (stats.totalClicks / stats.totalWins).toFixed(1);
         document.getElementById('win-screen').style.display = 'flex';
     }
 
@@ -311,7 +351,7 @@
     }
 
     function confirmNewGame() {
-        if(confirm("להתחיל מחדש? כל ההתקדמות תאבד.")) location.reload();
+        if(confirm("להתחיל משחק חדש?")) location.reload();
     }
 
     async function getRandomArticle() {
@@ -333,6 +373,7 @@
     }
 
     window.onload = () => {
+        updateStatsDisplay();
         const saved = localStorage.getItem('hamichlol_race_active');
         if (saved) {
             const data = JSON.parse(saved);
