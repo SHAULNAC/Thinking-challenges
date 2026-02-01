@@ -28,50 +28,51 @@
 
         .stat-box { text-align: center; background: rgba(255,255,255,0.08); padding: 5px 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
         .stat-val { font-weight: 800; color: var(--accent); font-size: 1.2em; display: block; }
-        .sub-stat { font-size: 0.7em; color: #94a3b8; display: block; }
 
         #content-area { 
             max-width: 850px; margin: 30px auto; background: var(--glass); padding: 40px; 
             border-radius: 20px; box-shadow: var(--shadow); min-height: 80vh;
-            transition: all 0.4s ease;
         }
 
-        /* סמן קירבה אנכי */
+        /* סמן קירבה דרמטי */
         #vertical-tracker {
-            position: fixed; left: 40px; top: 50%; transform: translateY(-50%);
-            width: 6px; height: 300px; background: rgba(15, 23, 42, 0.1);
+            position: fixed; left: 50px; top: 50%; transform: translateY(-50%);
+            width: 8px; height: 350px; background: rgba(15, 23, 42, 0.1);
             border-radius: 10px; z-index: 1000; opacity: 0; transition: 1s;
         }
         #vertical-tracker.active { opacity: 1; }
 
         #tracker-pointer {
             position: absolute; bottom: 0%; left: 50%; transform: translate(-50%, 50%);
-            width: 16px; height: 16px; background: #94a3b8; border-radius: 3px;
-            rotate: 45deg; transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            width: 22px; height: 22px; background: #94a3b8; border-radius: 50%;
+            transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            border: 3px solid white;
         }
 
-        #tracker-text {
-            position: absolute; right: 25px; top: 50%; transform: translateY(-50%);
-            width: 180px; font-weight: 600; font-size: 0.9em; color: var(--primary);
-            opacity: 0; transition: 0.3s; pointer-events: none; text-align: left;
+        #distance-tag {
+            position: absolute; left: 35px; top: 50%; transform: translateY(-50%);
+            white-space: nowrap; font-weight: 800; padding: 5px 12px;
+            border-radius: 20px; color: white; background: var(--primary);
+            font-size: 0.85em; opacity: 0; transition: 0.4s;
+            box-shadow: var(--shadow);
         }
 
-        .dist-2 #tracker-pointer { bottom: 50%; background: var(--gold); box-shadow: 0 0 15px var(--gold); }
-        .dist-1 #tracker-pointer { bottom: 100%; background: var(--danger); box-shadow: 0 0 25px var(--danger); }
-        .dist-active #tracker-text { opacity: 1; }
+        /* מצבים דרמטיים */
+        .dist-2 #tracker-pointer { bottom: 50%; background: var(--gold); box-shadow: 0 0 25px var(--gold); animation: pulse 1.5s infinite; }
+        .dist-1 #tracker-pointer { bottom: 100%; background: var(--danger); box-shadow: 0 0 35px var(--danger); animation: pulse 0.6s infinite; }
+        .dist-active #distance-tag { opacity: 1; }
 
-        /* דף ניצחון */
+        @keyframes pulse {
+            0% { transform: translate(-50%, 50%) scale(1); }
+            50% { transform: translate(-50%, 50%) scale(1.3); }
+            100% { transform: translate(-50%, 50%) scale(1); }
+        }
+
         #win-screen {
             position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(15px); display: none; flex-direction: column;
             justify-content: center; align-items: center; z-index: 5000; color: white;
-        }
-
-        .win-card {
-            background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-            padding: 50px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.2);
-            text-align: center; transform: scale(0.9); animation: popUp 0.6s forwards;
         }
 
         .btn { 
@@ -81,12 +82,14 @@
         .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
         
         input { 
-            width: 80%; padding: 12px; margin: 8px 0; border-radius: 10px; border: none; 
-            background: rgba(255,255,255,0.9); font-family: inherit;
+            width: 85%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd;
+            font-family: inherit; font-size: 1em;
         }
 
-        .hidden { display: none; }
-        @keyframes popUp { to { transform: scale(1); opacity: 1; } }
+        .overlay-card {
+            text-align:center; width:450px; padding:40px; background:rgba(255,255,255,0.05); 
+            border-radius:24px; border:1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+        }
 
         .mw-editsection, .noprint, .ambox, .infobox, .navbox, .hatnote { display: none !important; }
     </style>
@@ -100,9 +103,9 @@
     </div>
     
     <div style="display:flex; gap:15px;">
-        <div class="stat-box">יעד <span id="target-label" class="stat-val">---</span></div>
-        <div class="stat-box">צעדים <span id="click-count" class="stat-val">0</span></div>
-        <div class="stat-box">זמן <span id="timer" class="stat-val">00:00</span></div>
+        <div class="stat-box"><span class="sub-stat" style="font-size:0.7em; color:#94a3b8;">יעד</span><span id="target-label" class="stat-val">---</span></div>
+        <div class="stat-box"><span class="sub-stat" style="font-size:0.7em; color:#94a3b8;">צעדים</span><span id="click-count" class="stat-val">0</span></div>
+        <div class="stat-box"><span class="sub-stat" style="font-size:0.7em; color:#94a3b8;">זמן</span><span id="timer" class="stat-val">00:00</span></div>
     </div>
 
     <button id="hint-btn" class="btn" style="background: var(--gold);" onclick="useHint()">💡 רמז (<span id="hints-left">3</span>)</button>
@@ -110,61 +113,107 @@
 
 <div id="vertical-tracker">
     <div id="tracker-pointer"></div>
-    <div id="tracker-text"></div>
+    <div id="distance-tag"></div>
 </div>
 
 <div id="content-area"></div>
 
 <div id="start-screen" style="position:fixed; inset:0; background:var(--primary); z-index:2000; display:flex; align-items:center; justify-content:center; color:white;">
-    <div style="text-align:center; width:450px; padding:40px; background:rgba(255,255,255,0.05); border-radius:24px; border:1px solid rgba(255,255,255,0.1);">
-        <h1 style="font-size:3em; margin:0 0 20px 0;">מרוץ המכלול</h1>
+    <div class="overlay-card">
+        <h1 style="font-size:3.5em; margin:0 0 10px 0; font-weight:800;">מרוץ המכלול</h1>
+        <p style="color:#94a3b8; margin-bottom:30px;">Elite Strategy Game</p>
         
-        <div id="status-message" style="margin-bottom:20px; color:var(--gold); min-height:1.2em;"></div>
+        <div id="status-message" style="margin-bottom:20px; color:var(--gold); font-weight:600;"></div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:30px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:40px;">
             <button class="btn" onclick="startExtreme(60)">קל</button>
             <button class="btn" style="background:#1e293b" onclick="startExtreme(35)">בינוני</button>
             <button class="btn" style="background:var(--danger)" onclick="startExtreme(10)">קשה</button>
         </div>
 
-        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-            <p>משחק מותאם אישית</p>
-            <input type="text" id="custom-start" placeholder="ערך התחלה">
-            <input type="text" id="custom-target" placeholder="ערך יעד">
-            <button class="btn" style="width:100%; margin-top:10px;" onclick="setupGame(document.getElementById('custom-start').value, document.getElementById('custom-target').value)">התחל</button>
+        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 25px;">
+            <h3 style="margin:0 0 15px 0;">משחק מותאם אישית</h3>
+            <input type="text" id="custom-start" placeholder="ערך התחלה (למשל: ירושלים)">
+            <input type="text" id="custom-target" placeholder="ערך יעד (למשל: תלמוד)">
+            
+            <div id="custom-validation" class="hidden" style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; margin-top:15px;">
+                <p id="validation-info" style="margin:0 0 10px 0;"></p>
+                <button class="btn" style="background:var(--success); width:100%;" onclick="confirmCustomGame()">התחל עכשיו</button>
+                <button class="btn" style="background:transparent; font-size:0.8em; margin-top:5px;" onclick="resetCustom()">שנה ערכים</button>
+            </div>
+            
+            <button id="check-btn" class="btn" style="width:100%; margin-top:10px;" onclick="validateCustom()">בדוק רמת קושי</button>
         </div>
-
-        <div id="user-stats" style="margin-top:20px; font-size:0.85em; color:#94a3b8;"></div>
     </div>
 </div>
 
 <div id="win-screen">
-    <div class="win-card">
-        <h1 style="font-size:4em; margin:0;">🏆 ניצחון!</h1>
-        <p id="win-summary" style="font-size:1.5em; margin:20px 0;"></p>
-        <div style="display:flex; gap:20px; justify-content:center; margin-bottom:30px;">
-            <div class="stat-box"><span class="sub-stat">ניצחונות</span><span id="stat-wins" class="stat-val">0</span></div>
-            <div class="stat-box"><span class="sub-stat">ממוצע</span><span id="stat-avg" class="stat-val">0</span></div>
-        </div>
-        <button class="btn" style="padding:15px 40px; background:var(--success);" onclick="location.reload()">שחק שוב</button>
+    <div class="overlay-card" style="background:rgba(16, 185, 129, 0.1); border-color:var(--success);">
+        <h1 style="font-size:4.5em; margin:0; color:var(--success);">🏆 מדהים!</h1>
+        <p id="win-summary" style="font-size:1.8em; margin:25px 0;"></p>
+        <button class="btn" style="padding:18px 50px; font-size:1.2em; background:var(--success);" onclick="location.reload()">שחק שוב</button>
     </div>
 </div>
 
 <script>
-    let clicks = 0, seconds = 0, timerInterval, targetTitle = "", historyStack = [], targetLinksCount = 0;
-    let hintsLeft = 3, dist1Nodes = new Set();
+    let clicks = 0, seconds = 0, timerInterval, targetTitle = "", historyStack = [], dist1Nodes = new Set();
+    let hintsLeft = 3;
 
-    let stats = JSON.parse(localStorage.getItem('hamichlol_elite_stats')) || { totalWins: 0, totalClicks: 0, totalTime: 0 };
+    // לוגיקת משחק מותאם אישית עם בדיקה
+    async function validateCustom() {
+        const start = document.getElementById('custom-start').value.trim();
+        const target = document.getElementById('custom-target').value.trim();
+        if(!start || !target) return alert("מלא את שני הערכים");
 
-    function saveGameState(current) {
-        localStorage.setItem('hamichlol_race_active', JSON.stringify({
-            clicks, seconds, targetTitle, historyStack, hintsLeft, current
-        }));
+        document.getElementById('check-btn').innerText = "...בודק";
+        try {
+            const res = await fetch(`https://www.hamichlol.org.il/w/api.php?action=query&list=backlinks&bltitle=${encodeURIComponent(target)}&blnamespace=0&bllimit=250&format=json&origin=*`);
+            const data = await res.json();
+            const count = data.query.backlinks ? data.query.backlinks.length : 0;
+            
+            document.getElementById('validation-info').innerHTML = `יעד: <b>${target}</b><br>קישורים נכנסים: <b>${count}</b>`;
+            document.getElementById('custom-validation').classList.remove('hidden');
+            document.getElementById('check-btn').classList.add('hidden');
+        } catch (e) { alert("שגיאה בבדיקה"); }
+        document.getElementById('check-btn').innerText = "בדוק רמת קושי";
     }
 
+    function confirmCustomGame() {
+        setupGame(document.getElementById('custom-start').value, document.getElementById('custom-target').value);
+    }
+
+    function resetCustom() {
+        document.getElementById('custom-validation').classList.add('hidden');
+        document.getElementById('check-btn').classList.remove('hidden');
+    }
+
+    // ניהול המצפן/סמן
+    async function prepareCompass(target) {
+        const res = await fetch(`https://www.hamichlol.org.il/w/api.php?action=query&list=backlinks&bltitle=${encodeURIComponent(target)}&blnamespace=0&bllimit=200&format=json&origin=*`);
+        const data = await res.json();
+        dist1Nodes = new Set(data.query.backlinks ? data.query.backlinks.map(b => b.title) : []);
+    }
+
+    function updateCompass(title, links) {
+        const tracker = document.getElementById('vertical-tracker');
+        const tag = document.getElementById('distance-tag');
+        tracker.classList.remove('dist-1', 'dist-2', 'dist-active');
+        
+        if (dist1Nodes.has(title)) {
+            tracker.classList.add('dist-1', 'dist-active');
+            tag.innerText = "מרחק 1: קישור ישיר ליעד!";
+            tag.style.background = 'var(--danger)';
+        } else if (links.some(l => dist1Nodes.has(l))) {
+            tracker.classList.add('dist-2', 'dist-active');
+            tag.innerText = "מרחק 2: היעד מעבר לפינה";
+            tag.style.background = 'var(--gold)';
+        }
+    }
+
+    // פונקציות ליבה (זהות למקור עם תיקון באגים)
     async function startExtreme(minLinks) {
         const status = document.getElementById('status-message');
-        status.innerText = "מחפש יעד...";
+        status.innerText = "סורק ערכים...";
         try {
             const start = await getRandomArticle();
             let target = "", count = 0;
@@ -175,11 +224,10 @@
                 count = data.query.backlinks ? data.query.backlinks.length : 0;
             }
             setupGame(start, target);
-        } catch (e) { status.innerText = "שגיאת חיבור"; }
+        } catch (e) { status.innerText = "שגיאה בחיבור למכלול"; }
     }
 
     function setupGame(start, target, isResume = false) {
-        if(!start || !target) return;
         targetTitle = target;
         document.getElementById('target-label').innerText = target;
         document.getElementById('start-screen').style.display = 'none';
@@ -187,26 +235,6 @@
         prepareCompass(target);
         startTimer();
         loadArticle(start, isResume);
-    }
-
-    async function prepareCompass(target) {
-        const res = await fetch(`https://www.hamichlol.org.il/w/api.php?action=query&list=backlinks&bltitle=${encodeURIComponent(target)}&blnamespace=0&bllimit=200&format=json&origin=*`);
-        const data = await res.json();
-        dist1Nodes = new Set(data.query.backlinks ? data.query.backlinks.map(b => b.title) : []);
-    }
-
-    function updateCompass(title, links) {
-        const tracker = document.getElementById('vertical-tracker');
-        const text = document.getElementById('tracker-text');
-        tracker.classList.remove('dist-1', 'dist-2', 'dist-active');
-        
-        if (dist1Nodes.has(title)) {
-            tracker.classList.add('dist-1', 'dist-active');
-            text.innerText = "בערך הזה יש קישור ישיר ליעד!";
-        } else if (links.some(l => dist1Nodes.has(l))) {
-            tracker.classList.add('dist-2', 'dist-active');
-            text.innerText = "אתה ממש קרוב!";
-        }
     }
 
     async function loadArticle(title, isBack = false) {
@@ -227,7 +255,7 @@
                 if (current.toLowerCase() === targetTitle.toLowerCase()) win();
                 window.scrollTo(0,0);
             }
-        } catch (e) { area.innerText = "שגיאה בטעינת הערך"; }
+        } catch (e) { area.innerText = "שגיאה בטעינת הדף"; }
         area.style.opacity = '1';
     }
 
@@ -239,7 +267,7 @@
             const href = link.getAttribute('href');
             if (href && href.startsWith('/wiki/')) {
                 title = decodeURIComponent(href.replace('/wiki/', ''));
-            } else {
+            } else if (link.title) {
                 title = link.title;
             }
             if (title && !title.includes(':')) {
@@ -250,15 +278,16 @@
         }
     });
 
+    function saveGameState(current) {
+        localStorage.setItem('hamichlol_race_active', JSON.stringify({
+            clicks, seconds, targetTitle, historyStack, hintsLeft, current
+        }));
+    }
+
     function win() {
         clearInterval(timerInterval);
         localStorage.removeItem('hamichlol_race_active');
-        stats.totalWins++;
-        stats.totalClicks += clicks;
-        localStorage.setItem('hamichlol_elite_stats', JSON.stringify(stats));
         document.getElementById('win-summary').innerText = `הגעת ליעד ב-${clicks} צעדים!`;
-        document.getElementById('stat-wins').innerText = stats.totalWins;
-        document.getElementById('stat-avg').innerText = (stats.totalClicks / stats.totalWins).toFixed(1);
         document.getElementById('win-screen').style.display = 'flex';
     }
 
@@ -282,10 +311,7 @@
     }
 
     function confirmNewGame() {
-        if(confirm("להתחיל מחדש?")) {
-            localStorage.removeItem('hamichlol_race_active');
-            location.reload();
-        }
+        if(confirm("להתחיל מחדש? כל ההתקדמות תאבד.")) location.reload();
     }
 
     async function getRandomArticle() {
@@ -300,7 +326,7 @@
         const data = await res.json();
         const bl = data.query.backlinks;
         if (bl && bl.length) {
-            alert(`💡 רמז: הערך "${bl[Math.floor(Math.random()*bl.length)].title}" מקשר ליעד.`);
+            alert(`💡 רמז: הערך "${bl[Math.floor(Math.random()*bl.length)].title}" מקשר ישירות ליעד.`);
             hintsLeft--;
             document.getElementById('hints-left').innerText = hintsLeft;
         }
@@ -318,8 +344,6 @@
             document.getElementById('click-count').innerText = clicks;
             setupGame(data.current, targetTitle, true);
         }
-        const avg = stats.totalWins ? (stats.totalClicks / stats.totalWins).toFixed(1) : 0;
-        document.getElementById('user-stats').innerText = `ניצחונות: ${stats.totalWins} | ממוצע צעדים: ${avg}`;
     };
 </script>
 </body>
