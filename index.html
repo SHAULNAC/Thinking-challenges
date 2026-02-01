@@ -52,28 +52,51 @@
         .hint-btn { background: var(--gold); color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.9em; }
         .hint-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
 
-        /* סגנון למצפן המונפש */
-        #compass-container {
-            position: fixed; bottom: 20px; right: 20px; 
-            display: flex; align-items: center; gap: 12px;
-            background: var(--primary); color: white; padding: 12px 20px;
-            border-radius: 50px; box-shadow: var(--shadow); z-index: 1000;
-            transition: 0.5s; opacity: 0; transform: translateY(20px);
+        /* עיצוב המצפן היוקרתי */
+        #luxury-compass {
+            position: fixed; bottom: 30px; right: 30px;
+            width: 60px; height: 60px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            z-index: 2000;
+            opacity: 0; transform: scale(0.5);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        #compass-container.visible { opacity: 1; transform: translateY(0); }
-        
-        #compass-pulse {
-            width: 15px; height: 15px; background: #94a3b8; border-radius: 50%;
+        #luxury-compass.active { opacity: 1; transform: scale(1); }
+
+        .radar-core {
+            width: 12px; height: 12px;
+            background: #94a3b8;
+            border-radius: 50%;
+            position: relative;
+            transition: background 0.5s;
         }
 
-        .dist-3 { background: #fbbf24 !important; animation: pulse 1.5s infinite; }
-        .dist-2 { background: #fb923c !important; animation: pulse 0.8s infinite; }
-        .dist-1 { background: #ef4444 !important; animation: pulse 0.4s infinite; }
+        .radar-wave {
+            position: absolute;
+            inset: -2px;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            opacity: 0;
+        }
 
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { transform: scale(1.4); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        /* אנימציות דופק לפי רמה */
+        .dist-3 .radar-core { background: #fbbf24; color: #fbbf24; }
+        .dist-3 .radar-wave { animation: luxury-pulse 2s infinite; }
+
+        .dist-2 .radar-core { background: #fb923c; color: #fb923c; }
+        .dist-2 .radar-wave { animation: luxury-pulse 1s infinite; }
+
+        .dist-1 .radar-core { background: #ef4444; color: #ef4444; }
+        .dist-1 .radar-wave { animation: luxury-pulse 0.5s infinite; }
+
+        @keyframes luxury-pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(4); opacity: 0; }
         }
 
         .overlay { 
@@ -125,9 +148,11 @@
 
 <div id="content-area" class="fade-in"></div>
 
-<div id="compass-container">
-    <div id="compass-pulse"></div>
-    <span id="compass-text" style="font-weight:bold; font-size:0.9em;">סורק סביבה...</span>
+<div id="luxury-compass">
+    <div class="radar-core" id="compass-core">
+        <div class="radar-wave"></div>
+        <div class="radar-wave" style="animation-delay: 0.2s"></div>
+    </div>
 </div>
 
 <div id="start-screen" class="overlay">
@@ -188,12 +213,12 @@
         osc.stop(audioCtx.currentTime + duration);
     }
 
-    // פונקציות המצפן החדשות
+    // פונקציות המצפן
     async function prepareCompass(target) {
         try {
             const res1 = await fetch(`https://www.hamichlol.org.il/w/api.php?action=query&list=backlinks&bltitle=${encodeURIComponent(target)}&blnamespace=0&bllimit=200&format=json&origin=*`);
             const data1 = await res1.json();
-            const backlinks = data1.query.backlinks.map(b => b.title);
+            const backlinks = data1.query.backlinks ? data1.query.backlinks.map(b => b.title) : [];
             dist1Nodes = new Set(backlinks);
 
             if (backlinks.length > 0) {
@@ -208,32 +233,22 @@
                 }
             }
             isCompassReady = true;
-            document.getElementById('compass-container').classList.add('visible');
-        } catch (e) { console.log("Compass error:", e); }
+            document.getElementById('luxury-compass').classList.add('active');
+        } catch (e) { console.log("Compass error"); }
     }
 
     function updateCompassVisuals(currentTitle, linksOnPage) {
         if (!isCompassReady) return;
         
-        const pulse = document.getElementById('compass-pulse');
-        const text = document.getElementById('compass-text');
-        pulse.className = ''; 
+        const compass = document.getElementById('luxury-compass');
+        compass.className = 'active'; // איפוס קלאסים
 
         if (dist1Nodes.has(currentTitle)) {
-            pulse.classList.add('dist-1');
-            text.innerText = "לוהט (מרחק 1)";
+            compass.classList.add('dist-1');
         } else if (dist2Nodes.has(currentTitle)) {
-            pulse.classList.add('dist-2');
-            text.innerText = "חם מאוד (מרחק 2)";
-        } else {
-            const isNear3 = linksOnPage.some(l => dist2Nodes.has(l));
-            if (isNear3) {
-                pulse.classList.add('dist-3');
-                text.innerText = "מתחמם (מרחק 3)";
-            } else {
-                text.innerText = "מחפש כיוון...";
-                pulse.style.background = "#94a3b8";
-            }
+            compass.classList.add('dist-2');
+        } else if (linksOnPage.some(l => dist2Nodes.has(l))) {
+            compass.classList.add('dist-3');
         }
     }
 
@@ -312,7 +327,7 @@
         document.getElementById('target-label').innerText = target;
         document.getElementById('target-links-header').innerText = `${targetLinksCount} קישורים נכנסים`;
         document.getElementById('start-screen').classList.add('hidden');
-        prepareCompass(target); // הכנת המצפן ברקע
+        prepareCompass(target); 
         startTimer();
         loadArticle(start);
     }
@@ -329,8 +344,7 @@
                     const currentTitle = data.parse.displaytitle.replace(/<[^>]*>?/gm, '').trim();
                     area.innerHTML = `<h1 style="font-size:2.5em; border-bottom:4px solid var(--accent); padding-bottom:10px;">${currentTitle}</h1>` + data.parse.text["*"];
                     
-                    // שליפת קישורים לצורך המצפן
-                    const linksOnPage = data.parse.links.map(l => l["*"]);
+                    const linksOnPage = data.parse.links ? data.parse.links.map(l => l["*"]) : [];
                     updateCompassVisuals(currentTitle, linksOnPage);
 
                     if (!isBack) historyStack.push(currentTitle);
@@ -380,7 +394,7 @@
 
     function win() {
         clearInterval(timerInterval);
-        document.getElementById('compass-container').classList.remove('visible');
+        document.getElementById('luxury-compass').classList.remove('active');
         playSound(523.25, 'square', 0.3);
         setTimeout(() => playSound(659.25, 'square', 0.3), 150);
         setTimeout(() => playSound(783.99, 'square', 0.5), 300);
