@@ -52,6 +52,30 @@
         .hint-btn { background: var(--gold); color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.9em; }
         .hint-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
 
+        /* סגנון למצפן המונפש */
+        #compass-container {
+            position: fixed; bottom: 20px; right: 20px; 
+            display: flex; align-items: center; gap: 12px;
+            background: var(--primary); color: white; padding: 12px 20px;
+            border-radius: 50px; box-shadow: var(--shadow); z-index: 1000;
+            transition: 0.5s; opacity: 0; transform: translateY(20px);
+        }
+        #compass-container.visible { opacity: 1; transform: translateY(0); }
+        
+        #compass-pulse {
+            width: 15px; height: 15px; background: #94a3b8; border-radius: 50%;
+        }
+
+        .dist-3 { background: #fbbf24 !important; animation: pulse 1.5s infinite; }
+        .dist-2 { background: #fb923c !important; animation: pulse 0.8s infinite; }
+        .dist-1 { background: #ef4444 !important; animation: pulse 0.4s infinite; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1.4); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
         .overlay { 
             position: fixed; inset: 0; background: var(--primary); 
             display: flex; flex-direction: column; justify-content: center; 
@@ -101,6 +125,11 @@
 
 <div id="content-area" class="fade-in"></div>
 
+<div id="compass-container">
+    <div id="compass-pulse"></div>
+    <span id="compass-text" style="font-weight:bold; font-size:0.9em;">סורק סביבה...</span>
+</div>
+
 <div id="start-screen" class="overlay">
     <div class="card">
         <h1 style="font-size: 3em; margin: 0 0 10px 0; letter-spacing: -1px;">מרוץ המכלול</h1>
@@ -140,6 +169,11 @@
     let clicks = 0, seconds = 0, timerInterval, targetTitle = "", historyStack = [], targetLinksCount = 0;
     let hintsLeft = 3, pendingStart = "", pendingTarget = "";
 
+    // משתני המצפן
+    let dist1Nodes = new Set();
+    let dist2Nodes = new Set();
+    let isCompassReady = false;
+
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playSound(freq, type = 'sine', duration = 0.1) {
         const osc = audioCtx.createOscillator();
@@ -152,6 +186,55 @@
         gain.connect(audioCtx.destination);
         osc.start();
         osc.stop(audioCtx.currentTime + duration);
+    }
+
+    // פונקציות המצפן החדשות
+    async function prepareCompass(target) {
+        try {
+            const res1 = await fetch(`https://www.hamichlol.org.il/w/api.php?action=query&list=backlinks&bltitle=${encodeURIComponent(target)}&blnamespace=0&bllimit=200&format=json&origin=*`);
+            const data1 = await res1.json();
+            const backlinks = data1.query.backlinks.map(b => b.title);
+            dist1Nodes = new Set(backlinks);
+
+            if (backlinks.length > 0) {
+                const batch = backlinks.slice(0, 40).join('|');
+                const res2 = await fetch(`https://www.hamichlol.org.il/w/api.php?action=query&titles=${encodeURIComponent(batch)}&prop=linkshere&lhlimit=100&format=json&origin=*`);
+                const data2 = await res2.json();
+                if (data2.query.pages) {
+                    for (let id in data2.query.pages) {
+                        const lh = data2.query.pages[id].linkshere;
+                        if (lh) lh.forEach(item => dist2Nodes.add(item.title));
+                    }
+                }
+            }
+            isCompassReady = true;
+            document.getElementById('compass-container').classList.add('visible');
+        } catch (e) { console.log("Compass error:", e); }
+    }
+
+    function updateCompassVisuals(currentTitle, linksOnPage) {
+        if (!isCompassReady) return;
+        
+        const pulse = document.getElementById('compass-pulse');
+        const text = document.getElementById('compass-text');
+        pulse.className = ''; 
+
+        if (dist1Nodes.has(currentTitle)) {
+            pulse.classList.add('dist-1');
+            text.innerText = "לוהט (מרחק 1)";
+        } else if (dist2Nodes.has(currentTitle)) {
+            pulse.classList.add('dist-2');
+            text.innerText = "חם מאוד (מרחק 2)";
+        } else {
+            const isNear3 = linksOnPage.some(l => dist2Nodes.has(l));
+            if (isNear3) {
+                pulse.classList.add('dist-3');
+                text.innerText = "מתחמם (מרחק 3)";
+            } else {
+                text.innerText = "מחפש כיוון...";
+                pulse.style.background = "#94a3b8";
+            }
+        }
     }
 
     async function getBacklinksCount(title) {
@@ -229,6 +312,7 @@
         document.getElementById('target-label').innerText = target;
         document.getElementById('target-links-header').innerText = `${targetLinksCount} קישורים נכנסים`;
         document.getElementById('start-screen').classList.add('hidden');
+        prepareCompass(target); // הכנת המצפן ברקע
         startTimer();
         loadArticle(start);
     }
@@ -239,11 +323,16 @@
         
         setTimeout(async () => {
             try {
-                const res = await fetch(`https://www.hamichlol.org.il/w/api.php?action=parse&page=${encodeURIComponent(title)}&format=json&origin=*&prop=text|displaytitle&redirects=1`);
+                const res = await fetch(`https://www.hamichlol.org.il/w/api.php?action=parse&page=${encodeURIComponent(title)}&format=json&origin=*&prop=text|displaytitle|links&redirects=1`);
                 const data = await res.json();
                 if (data.parse) {
                     const currentTitle = data.parse.displaytitle.replace(/<[^>]*>?/gm, '').trim();
                     area.innerHTML = `<h1 style="font-size:2.5em; border-bottom:4px solid var(--accent); padding-bottom:10px;">${currentTitle}</h1>` + data.parse.text["*"];
+                    
+                    // שליפת קישורים לצורך המצפן
+                    const linksOnPage = data.parse.links.map(l => l["*"]);
+                    updateCompassVisuals(currentTitle, linksOnPage);
+
                     if (!isBack) historyStack.push(currentTitle);
                     if (currentTitle.toLowerCase() === targetTitle.toLowerCase()) win();
                     window.scrollTo(0,0);
@@ -291,6 +380,7 @@
 
     function win() {
         clearInterval(timerInterval);
+        document.getElementById('compass-container').classList.remove('visible');
         playSound(523.25, 'square', 0.3);
         setTimeout(() => playSound(659.25, 'square', 0.3), 150);
         setTimeout(() => playSound(783.99, 'square', 0.5), 300);
