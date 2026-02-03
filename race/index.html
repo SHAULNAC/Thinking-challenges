@@ -39,7 +39,6 @@
         .stat-val { font-weight: 800; color: var(--accent); font-size: 1.2em; display: block; }
         .sub-stat { font-size: 0.7em; color: #94a3b8; display: block; }
 
-        /* Tooltip style */
         #target-tooltip {
             position: absolute; top: 110%; left: 50%; transform: translateX(-50%);
             width: 250px; background: white; color: #333; padding: 15px;
@@ -52,6 +51,12 @@
         #content-area { 
             max-width: 850px; margin: 30px auto; background: var(--glass); padding: 40px; 
             border-radius: 20px; box-shadow: var(--shadow); min-height: 80vh;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+        }
+
+        .page-transition {
+            transform: translateY(20px);
+            opacity: 0;
         }
 
         #vertical-tracker {
@@ -185,6 +190,20 @@
     let clicks = 0, seconds = 0, timerInterval, targetTitle = "", historyStack = [], dist1Nodes = new Set(), hintsLeft = 3;
     let stats = JSON.parse(localStorage.getItem('hamichlol_pro_stats')) || { totalWins: 0, totalClicks: 0, totalTime: 0 };
 
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playClickSound(freq = 600, type = 'sine', duration = 0.1) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
     function updateStatsDisplay() {
         const avg = stats.totalWins ? (stats.totalClicks / stats.totalWins).toFixed(1) : 0;
         document.getElementById('stats-text').innerText = `סטטיסטיקה: ${stats.totalWins} ניצחונות | ממוצע ${avg} צעדים`;
@@ -241,9 +260,11 @@
         if (dist1Nodes.has(title)) {
             tracker.classList.add('dist-1', 'dist-active');
             tag.innerText = "רותח!"; tag.style.background = 'var(--danger)';
+            playClickSound(800, 'square', 0.2);
         } else if (links.some(l => dist1Nodes.has(l))) {
             tracker.classList.add('dist-2', 'dist-active');
             tag.innerText = "מתחמם..."; tag.style.background = 'var(--gold)';
+            playClickSound(400, 'sine', 0.15);
         }
     }
 
@@ -275,22 +296,28 @@
 
     async function loadArticle(title, isBack = false) {
         const area = document.getElementById('content-area');
-        area.style.opacity = '0.5';
+        area.classList.add('page-transition');
+        
         try {
             const res = await fetch(`https://www.hamichlol.org.il/w/api.php?action=parse&page=${encodeURIComponent(title)}&format=json&origin=*&prop=text|displaytitle|links&redirects=1`);
             const data = await res.json();
             if (data.parse) {
-                const current = data.parse.displaytitle.replace(/<[^>]*>?/gm, '');
-                area.innerHTML = `<h1>${current}</h1>` + data.parse.text["*"];
-                const links = data.parse.links.map(l => l["*"]);
-                updateCompass(current, links);
-                if (!isBack) historyStack.push(current);
-                saveGameState(current);
-                if (current.toLowerCase() === targetTitle.toLowerCase()) win();
-                window.scrollTo(0,0);
+                setTimeout(() => {
+                    const current = data.parse.displaytitle.replace(/<[^>]*>?/gm, '');
+                    area.innerHTML = `<h1>${current}</h1>` + data.parse.text["*"];
+                    const links = data.parse.links.map(l => l["*"]);
+                    updateCompass(current, links);
+                    if (!isBack) historyStack.push(current);
+                    saveGameState(current);
+                    if (current.toLowerCase() === targetTitle.toLowerCase()) win();
+                    window.scrollTo(0,0);
+                    area.classList.remove('page-transition');
+                }, 400);
             }
-        } catch (e) { area.innerText = "שגיאה"; }
-        area.style.opacity = '1';
+        } catch (e) { 
+            area.innerText = "שגיאה"; 
+            area.classList.remove('page-transition');
+        }
     }
 
     document.addEventListener('click', e => {
@@ -299,6 +326,7 @@
             e.preventDefault();
             let title = link.title || decodeURIComponent((link.getAttribute('href') || "").replace('/wiki/', ''));
             if (title && !title.includes(':')) {
+                playClickSound(150, 'triangle', 0.05);
                 clicks++;
                 document.getElementById('click-count').innerText = clicks;
                 loadArticle(title);
@@ -312,6 +340,10 @@
 
     function win() {
         clearInterval(timerInterval);
+        playClickSound(523.25, 'sine', 0.5); 
+        setTimeout(() => playClickSound(659.25, 'sine', 0.5), 150);
+        setTimeout(() => playClickSound(783.99, 'sine', 0.7), 300);
+        
         localStorage.removeItem('hamichlol_race_active');
         stats.totalWins++; stats.totalClicks += clicks; stats.totalTime += seconds;
         localStorage.setItem('hamichlol_pro_stats', JSON.stringify(stats));
@@ -334,6 +366,7 @@
 
     function goBack() {
         if (historyStack.length > 1) {
+            playClickSound(100, 'sine', 0.1);
             historyStack.pop();
             loadArticle(historyStack[historyStack.length - 1], true);
             clicks++;
@@ -351,6 +384,7 @@
 
     async function useHint() {
         if (hintsLeft <= 0) return;
+        playClickSound(900, 'sine', 0.2);
         const res = await fetch(`https://www.hamichlol.org.il/w/api.php?action=query&list=backlinks&bltitle=${encodeURIComponent(targetTitle)}&blnamespace=0&bllimit=50&format=json&origin=*`);
         const data = await res.json();
         const bl = data.query.backlinks;
@@ -375,4 +409,3 @@
 </script>
 </body>
 </html>
-
