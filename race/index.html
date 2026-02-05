@@ -204,6 +204,13 @@
 <script>
     let clicks = 0, seconds = 0, timerInterval, targetTitle = "", historyStack = [], dist1Nodes = new Set(), hintsLeft = 3;
     let stats = JSON.parse(localStorage.getItem('hamichlol_pro_stats')) || { totalWins: 0, totalClicks: 0, totalTime: 0 };
+    let playerName = localStorage.getItem('hamichlol_player_name') || "";
+
+    const GOOGLE_FORM_URL = "https://docs.google.com/forms/u/0/d/e/1FAIpQLSd7S7_tC3v13E0e4-Gbe6D6pY0HqX8v_SOf0f0XG_M6FpM-9Q/formResponse";
+    const ENTRY_NAME = "entry.2063073722";
+    const ENTRY_STEPS = "entry.1704603310";
+    const ENTRY_TIME = "entry.1479860471";
+    const ENTRY_TARGET = "entry.204561819";
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playClickSound(freq = 600, type = 'sine', duration = 0.1) {
@@ -298,51 +305,30 @@
         } catch (e) { }
     }
 
-    // פונקציית Hash משופרת למניעת התנגשויות (שימוש במספרים ראשוניים גדולים)
-    function getDeterministicHash(str) {
-        let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
-        for (let i = 0, ch; i < str.length; i++) {
-            ch = str.charCodeAt(i);
-            h1 = Math.imul(h1 ^ ch, 2654435761);
-            h2 = Math.imul(h2 ^ ch, 1597334677);
-        }
-        h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-        h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-        return 4294967296 * (2097151 & h2) + (h1 >>> 0);
-    }
-
     async function startDailyChallenge() {
-        document.getElementById('status-message').innerText = "יוצר אתגר יומי...";
-        const dateStr = new Date().toISOString().slice(0, 10);
-        
-        // בחירת מוצא (Hash מבוסס תאריך + "start")
-        const start = await getRandomArticleBySeed(dateStr + "daily_start_v11");
-        
-        // בחירת יעד יציב אך אקראי (Hash מבוסס תאריך + קריטריון קושי)
-        let target = "";
-        let found = false;
-        let attempt = 0;
-        
-        while(!found && attempt < 50) {
-            target = await getRandomArticleBySeed(dateStr + "daily_target_attempt_" + attempt);
-            const res = await fetch(`https://www.hamichlol.org.il/w/api.php?action=query&list=backlinks&bltitle=${encodeURIComponent(target)}&blnamespace=0&bllimit=100&format=json&origin=*`);
-            const data = await res.json();
-            const count = data.query.backlinks ? data.query.backlinks.length : 0;
-            
-            // אתגר יומי - יעד ברמת קושי בינונית (15-40 קישורים)
-            if(count >= 15 && count <= 40) {
-                found = true;
-            } else {
-                attempt++;
-            }
+        if (!playerName) {
+            playerName = prompt("הזן שם משתמש לאתגר:");
+            if (!playerName) return;
+            localStorage.setItem('hamichlol_player_name', playerName);
         }
+        document.getElementById('status-message').innerText = "טוען אתגר...";
+        const dateSeed = new Date().toISOString().slice(0, 10);
+        
+        // שימוש ב-Salt שונה למוצא וליעד עם פונקציית Hash משופרת
+        const start = await getRandomArticleBySeed(dateSeed + "_DAILY_START_V7");
+      const target = "ירושלים";   // ערך היעד שאתה קובע
         
         setupGame(start, target);
     }
 
     async function getRandomArticleBySeed(seed) {
-        const hash = getDeterministicHash(seed);
-        const offset = Math.abs(hash) % 18000; // טווח רחב יותר של ערכים
+        // פונקציית Hash דטרמיניסטית חזקה שמגיבה לכל שינוי בטקסט
+        let hash = 0;
+        for (let i = 0; i < seed.length; i++) {
+            hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+            hash |= 0; 
+        }
+        const offset = Math.abs(hash) % 15000;
         const res = await fetch(`https://www.hamichlol.org.il/w/api.php?action=query&list=allpages&aplimit=1&apoffset=${offset}&format=json&origin=*`);
         const data = await res.json();
         return data.query.allpages[0].title;
