@@ -256,24 +256,21 @@
     }
 
     async function syncDataToSheet() {
-    // בדיקה: אם זה לא אתגר יומי, אל תשלח נתונים לגיליון
     if (!isDailyChallenge) return; 
 
     const todayStr = new Date().toLocaleDateString('en-GB');
-    const dailyKey = `daily_done_${todayStr}`;
-    
-    // מניעת כפל שליחות לאותו יום
-    if (localStorage.getItem(dailyKey)) return; 
-    localStorage.setItem(dailyKey, "true");
-
     const timeStr = document.getElementById('timer').innerText;
+    
     const payload = {
         action: "submitScore",
-        name: playerName || "אנונימי",
+        name: playerName,
         steps: clicks,
         time: timeStr,
         target: targetTitle,
-        date: todayStr
+        date: todayStr,
+        path: historyStack.join(" ➔ "), // שליפת המסלול המלא
+        hintsUsed: 3 - hintsLeft,        // נתון נוסף: כמה רמזים נוצלו
+        userAgent: navigator.userAgent   // נתון נוסף: דפדפן
     };
 
     try {
@@ -282,9 +279,7 @@
             mode: 'no-cors',
             body: JSON.stringify(payload)
         });
-    } catch (err) { 
-        console.error("שגיאה בסנכרון הנתונים", err);
-    }
+    } catch (err) { }
 }
 
     // תיקון תקציר לפי קובץ 1
@@ -556,6 +551,7 @@
 </script>
 </body>
 </html>
+
 
 
 
