@@ -256,31 +256,36 @@
     }
 
     async function syncDataToSheet() {
-        const todayStr = new Date().toLocaleDateString('en-GB');
-        if (isDailyChallenge) {
-            const dailyKey = `daily_done_${todayStr}`;
-            if (localStorage.getItem(dailyKey)) return; 
-            localStorage.setItem(dailyKey, "true");
-        }
+    // בדיקה: אם זה לא אתגר יומי, אל תבצע שליחה ותצא מהפונקציה
+    if (!isDailyChallenge) return;
 
-        const timeStr = document.getElementById('timer').innerText;
-        const payload = {
-            action: "submitScore",
-            name: playerName || "אנונימי",
-            steps: clicks,
-            time: timeStr,
-            target: targetTitle,
-            date: todayStr
-        };
+    const todayStr = new Date().toLocaleDateString('en-GB');
+    const dailyKey = `daily_done_${todayStr}`;
+    
+    // מניעת שליחה כפולה של אותו אתגר יומי
+    if (localStorage.getItem(dailyKey)) return; 
+    localStorage.setItem(dailyKey, "true");
 
-        try {
-            await fetch(WEB_APP_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify(payload)
-            });
-        } catch (err) { }
+    const timeStr = document.getElementById('timer').innerText;
+    const payload = {
+        action: "submitScore",
+        name: playerName || "אנונימי",
+        steps: clicks,
+        time: timeStr,
+        target: targetTitle,
+        date: todayStr
+    };
+
+    try {
+        await fetch(WEB_APP_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(payload)
+        });
+    } catch (err) { 
+        console.error("שגיאה בסנכרון הנתונים");
     }
+}
 
     // תיקון תקציר לפי קובץ 1
     async function fetchTargetExtract() {
@@ -533,5 +538,6 @@
 </script>
 </body>
 </html>
+
 
 
