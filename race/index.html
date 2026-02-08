@@ -341,11 +341,29 @@
     function resetCustom() { document.getElementById('custom-validation').classList.add('hidden'); document.getElementById('check-btn').classList.remove('hidden'); }
 
     async function startDailyChallenge() {
-        if (!playerName) {
-            playerName = prompt("הזן שם משתמש לאתגר:");
-            if (!playerName) return;
-            localStorage.setItem('hamichlol_player_name', playerName);
+    if (!playerName) {
+        playerName = prompt("הזן שם משתמש לאתגר:");
+        if (!playerName) return;
+        localStorage.setItem('hamichlol_player_name', playerName);
+    }
+    
+    const todayStr = new Date().toLocaleDateString('en-GB');
+    
+    // בדיקת חסימה - האם כבר שיחק היום
+    document.getElementById('status-message').innerText = "בודק הרשאות כניסה...";
+    try {
+        const checkRes = await fetch(`${WEB_APP_URL}?action=checkIfPlayed&name=${encodeURIComponent(playerName)}&date=${todayStr}`);
+        const checkData = await checkRes.json();
+        if (checkData.played) {
+            alert("שיחקת כבר היום! ניתן להשתתף באתגר פעם אחת ביום בלבד.");
+            document.getElementById('status-message').innerText = "";
+            return;
         }
+    } catch (e) { console.error("Validation error"); }
+
+    // המשך הקוד הקיים שלך לטעינת האתגר...
+    // (הקוד שמושך את ה-getDaily)
+}
         
         document.getElementById('status-message').innerText = "בודק אם כבר הוגרל אתגר להיום...";
         const todayStr = new Date().toLocaleDateString('en-GB');
@@ -538,6 +556,7 @@
 </script>
 </body>
 </html>
+
 
 
 
