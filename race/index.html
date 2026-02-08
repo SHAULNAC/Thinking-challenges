@@ -245,19 +245,31 @@
         osc.stop(audioCtx.currentTime + duration);
     }
 
-    async function fetchLeaderboard() {
-        try {
-            const response = await fetch(`${WEB_APP_URL}?action=getBestScores&t=${Date.now()}`);
-            const data = await response.json();
-            if (data && data.status === "success") {
-                document.getElementById('best-steps').innerText = data.minSteps || "---";
-                document.getElementById('best-time').innerText = data.minTime || "---";
+   async function fetchLeaderboard() {
+    try {
+        const response = await fetch(`${WEB_APP_URL}?action=getBestScores&t=${Date.now()}`);
+        const data = await response.json();
+        
+        if (data && data.status === "success") {
+            // עדכון שיאים רגילים
+            document.getElementById('best-steps').innerText = data.minSteps || "---";
+            document.getElementById('best-time').innerText = data.minTime || "---";
+
+            // עדכון המסלול של אתמול
+            const pathContainer = document.getElementById('yesterday-path-container');
+            const pathText = document.getElementById('yesterday-path-text');
+            
+            if (data.yesterdayPath && data.yesterdayPath !== "אין נתונים מאתמול") {
+                pathText.innerText = data.yesterdayPath;
+                pathContainer.style.display = 'block';
+            } else {
+                pathContainer.style.display = 'none';
             }
-        } catch (e) {
-            document.getElementById('best-steps').innerText = "---";
-            document.getElementById('best-time').innerText = "---";
         }
+    } catch (e) {
+        console.error("שגיאה בטעינת לוח המובילים", e);
     }
+}
 
     async function syncDataToSheet() {
     if (!isDailyChallenge) return; 
@@ -555,6 +567,7 @@
 </script>
 </body>
 </html>
+
 
 
 
