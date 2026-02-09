@@ -26,7 +26,7 @@
 
         body { 
             font-family: 'Assistant', sans-serif; 
-            margin: 0; background: #f1f5f9; color: var(--primary); overflow: hidden; /* מניעת גלילה כללית */
+            margin: 0; background: #f1f5f9; color: var(--primary); overflow: hidden; 
         }
 
         #header { 
@@ -225,7 +225,6 @@
 </div>
 
 <script>
-    // [כל שאר הלוגיקה מהקוד המקורי שלך נשארת כאן ללא שינוי]
     let clicks = 0, seconds = 0, timerInterval, targetTitle = "", historyStack = [], dist1Nodes = new Set(), hintsLeft = 3;
     let isDailyChallenge = false;
     let dailyStartValue = "", dailyTargetValue = ""; 
@@ -272,6 +271,18 @@
                 document.getElementById('yesterday-meta').innerText = `שחקן: ${data.name} | צעדים: ${data.steps}`;
             }
         } catch (e) { console.log("No yesterday data"); }
+    }
+
+    async function preloadDailyInfo() {
+        const todayStr = new Date().toLocaleDateString('en-GB');
+        try {
+            const response = await fetch(`${WEB_APP_URL}?action=getDaily&date=${todayStr}`);
+            const data = await response.json();
+            if (data && data.found) {
+                dailyStartValue = data.start;
+                dailyTargetValue = data.target;
+            }
+        } catch (e) {}
     }
 
     async function syncDataToSheet() {
@@ -353,7 +364,7 @@
         const customTarget = document.getElementById('custom-target').value.trim();
         if (dailyStartValue && dailyTargetValue) {
             if (customStart === dailyStartValue && customTarget === dailyTargetValue) {
-                alert("ניסיון יפה... שחק בהגינות.");
+                alert("ניסיון יפה... אתה יכול לעשות את זה במכלול עצמו, חמוד.");
                 return;
             }
         }
@@ -399,7 +410,7 @@
             isDailyChallenge = true;
             setupGame(start, target);
         } catch (e) {
-            setupGame("ארץ ישראל", "ירושלים");
+            setupGame("המכלול", "דג חרב");
         }
     }
 
@@ -549,6 +560,7 @@
         updateStatsDisplay();
         fetchLeaderboard();
         fetchYesterdayBest();
+        preloadDailyInfo();
         const saved = localStorage.getItem('hamichlol_race_active');
         if (saved) {
             const data = JSON.parse(saved);
@@ -561,5 +573,3 @@
 </script>
 </body>
 </html>
-
-
