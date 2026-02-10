@@ -162,7 +162,17 @@
 <div id="start-screen" style="position:fixed; inset:0; background:var(--primary); z-index:2000; display:flex; align-items:center; justify-content:center; color:white;">
     <div class="overlay-card">
         <h1 style="font-size:2.2em; margin:0 0 5px 0; font-weight:800;">מרוץ המכלול</h1>
-        
+        <button class="btn" style="background:none; color:var(--accent); text-decoration:underline; font-size:0.8em; margin-bottom:10px; cursor:pointer;" onclick="toggleInstructions()">איך משחקים?</button>
+
+<div id="instructions-box" style="display:none; text-align: right; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; margin-bottom: 15px; font-size: 0.85em; border: 1px solid rgba(255,255,255,0.1);">
+    <h4 style="margin: 0 0 8px 0; color: var(--gold);">הוראות המשחק:</h4>
+    <ul style="margin: 0; padding-right: 18px; color: #cbd5e1; line-height: 1.4;">
+        <li>המטרה: להגיע מ<strong>ערך המוצא</strong> אל <strong>ערך היעד</strong>.</li>
+        <li>איך? לוחצים על קישורים בתוך הערכים כדי להתקדם.</li>
+        <li>מד החום בצד: מראה אם אתם "מתחממים" (מרחק 2 צעדים) או "רותחים" (מרחק צעד אחד מהיעד).</li>
+        <li>רמזים: כפתור ה-💡 יגלה לכם ערך שמקשר ישירות ליעד.</li>
+    </ul>
+</div>        
         <div id="best-scores" class="best-stats-container">
             <div class="best-item">
                 <span class="best-label">🏆 שיא צעדים</span>
@@ -238,7 +248,10 @@
     let playerName = localStorage.getItem('hamichlol_player_name') || "";
 
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyoZnmUDX8sbdQraRXGgNgMFp123gCLAILAHgR-a2EIfkTqG9wjSon5HngToryQPUG6/exec";
-
+function toggleInstructions() {
+    const box = document.getElementById('instructions-box');
+    box.style.display = (box.style.display === 'none') ? 'block' : 'none';
+}
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playClickSound(freq = 600, type = 'sine', duration = 0.1) {
         const osc = audioCtx.createOscillator();
@@ -579,4 +592,5 @@
 </script>
 </body>
 </html>
+
 
