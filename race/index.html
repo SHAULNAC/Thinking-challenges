@@ -508,18 +508,60 @@ function toggleInstructions() {
         }
     });
 
-    function win() {
-        clearInterval(timerInterval);
-        syncDataToSheet();
-        stats.totalWins++; stats.totalClicks += clicks; stats.totalTime += seconds;
-        localStorage.setItem('hamichlol_pro_stats', JSON.stringify(stats));
-        document.getElementById('win-summary').innerText = `הגעת אל "${targetTitle}" ב-${clicks} צעדים!`;
-        const pathEl = document.getElementById('final-path');
-        pathEl.innerHTML = '<b>המסלול שלך:</b><br>' + historyStack.map((step, i) => `<span class="path-step">${i+1}. ${step}</span>`).join('');
-        document.getElementById('win-screen').style.display = 'flex';
-        localStorage.removeItem('hamichlol_race_active');
+   function win() {
+    clearInterval(timerInterval);
+    syncDataToSheet();
+    stats.totalWins++; stats.totalClicks += clicks; stats.totalTime += seconds;
+    localStorage.setItem('hamichlol_pro_stats', JSON.stringify(stats));
+    
+    // הצגת סיכום הניצחון
+    document.getElementById('win-summary').innerText = `הגעת אל "${targetTitle}" ב-${clicks} צעדים!`;
+    
+    // יצירת רשימה ממוספרת אנכית
+    const pathEl = document.getElementById('final-path');
+    const formattedPath = historyStack.map((step, i) => 
+        `<div style="margin-bottom: 4px; text-align: right;">${i + 1}. 👈 ${step}</div>`
+    ).join('');
+    
+    // הזרקת הרשימה וכפתור העתקה ייעודי
+    pathEl.innerHTML = `
+        <b style="display: block; margin-bottom: 10px;">המסלול שלך:</b>
+        <div style="margin-bottom: 15px;">${formattedPath}</div>
+        <button id="copy-path-btn" class="btn" 
+                style="background: #475569; width: 100%; font-size: 0.85em; padding: 8px;" 
+                onclick="copyFullList()">
+            📋 העתק מסלול מלא לרשימה
+        </button>
+    `;
+
+    // עדכון הסטטיסטיקות במסך הניצחון
+    if(document.getElementById('stat-wins')) {
+        document.getElementById('stat-wins').innerText = stats.totalWins;
+        const avg = (stats.totalClicks / stats.totalWins).toFixed(1);
+        document.getElementById('stat-avg').innerText = avg;
     }
 
+    document.getElementById('win-screen').style.display = 'flex';
+    localStorage.removeItem('hamichlol_race_active');
+}
+
+// הוסף את פונקציית ההעתקה הזו במקום כלשהו ב-script
+function copyFullList() {
+    const timeStr = document.getElementById('timer').innerText;
+    const listText = historyStack.map((step, i) => `${i + 1}. ${step}`).join('\n');
+    const fullMessage = `🏆 ניצחתי במרוץ המכלול!\n📍 יעד: ${targetTitle}\n👣 צעדים: ${clicks}\n⏱️ זמן: ${timeStr}\n\nהמסלול שלי:\n${listText}`;
+    
+    navigator.clipboard.writeText(fullMessage).then(() => {
+        const btn = document.getElementById('copy-path-btn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "✅ הרשימה הועתקה!";
+        btn.style.background = "var(--success)";
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.style.background = "#475569";
+        }, 2000);
+    });
+}
     function startTimer() {
         if(timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(() => {
@@ -600,6 +642,7 @@ function toggleInstructions() {
 </script>
 </body>
 </html>
+
 
 
 
