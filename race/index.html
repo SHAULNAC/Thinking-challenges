@@ -352,7 +352,7 @@ function toggleInstructions() {
             const data = await res.json();
             const pages = data.query.pages;
             const extract = pages[Object.keys(pages)[0]].extract || "אין תקציר זמין.";
-            tooltip.innerText = extract.substring(0, 200) + "...";
+            tooltip.innerText = extract.substring(0, 300) + "...";
         } catch (e) { tooltip.innerText = "שגיאה בטעינת תקציר."; }
     }
 
@@ -549,7 +549,7 @@ function toggleInstructions() {
 function copyFullList() {
     const timeStr = document.getElementById('timer').innerText;
     const listText = historyStack.map((step, i) => `${i + 1}. ${step}`).join('\n');
-    const fullMessage = `🏆 ניצחתי במרוץ המכלול!\n📍 יעד: ${targetTitle}\n👣 צעדים: ${clicks}\n⏱️ זמן: ${timeStr}\n\nהמסלול שלי:\n${listText}`;
+    const fullMessage = `המסלול שלי:\n${listText}`;
     
     navigator.clipboard.writeText(fullMessage).then(() => {
         const btn = document.getElementById('copy-path-btn');
@@ -642,6 +642,7 @@ function copyFullList() {
 </script>
 </body>
 </html>
+
 
 
 
