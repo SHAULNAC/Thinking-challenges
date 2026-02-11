@@ -286,7 +286,7 @@ function toggleInstructions() {
             const data = await response.json();
             if (data && data.found) {
                 document.getElementById('yesterday-container').style.display = 'block';
-                document.getElementById('yesterday-path').innerText = data.path.replace(/ -> /g, " ➔ ");
+                document.getElementById('yesterday-path').innerText = data.path.replace(/ -> /g, " 🚶 ");
                 document.getElementById('yesterday-meta').innerText = `שחקן: ${data.name} | צעדים: ${data.steps}`;
             }
         } catch (e) { console.log("No yesterday data"); }
@@ -592,6 +592,7 @@ function toggleInstructions() {
 </script>
 </body>
 </html>
+
 
 
 
