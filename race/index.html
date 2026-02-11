@@ -281,17 +281,25 @@ function toggleInstructions() {
     }
 
     async function fetchYesterdayBest() {
-        try {
-            const response = await fetch(`${WEB_APP_URL}?action=getYesterdayBest&t=${Date.now()}`);
-            const data = await response.json();
-            if (data && data.found) {
-                document.getElementById('yesterday-container').style.display = 'block';
-                document.getElementById('yesterday-path').innerText = data.path.replace(/ -> /g, " 👈 ");
-                document.getElementById('yesterday-meta').innerText = `שחקן: ${data.name} | צעדים: ${data.steps}`;
-            }
-        } catch (e) { console.log("No yesterday data"); }
-    }
-
+    try {
+        const response = await fetch(`${WEB_APP_URL}?action=getYesterdayBest&t=${Date.now()}`);
+        const data = await response.json();
+        if (data && data.found) {
+            document.getElementById('yesterday-container').style.display = 'block';
+            
+            // פיצול המחרוזת למערך ויצירת HTML של רשימה ממוספרת
+            const pathSteps = data.path.split(" -> ");
+            const formattedPath = pathSteps.map((step, index) => {
+                return `<div style="margin-bottom: 3px;">${index + 1}. 👈 ${step}</div>`;
+            }).join("");
+            
+            // שימוש ב-innerHTML כדי לרנדר את השורות החדשות
+            document.getElementById('yesterday-path').innerHTML = formattedPath;
+            
+            document.getElementById('yesterday-meta').innerText = `שחקן: ${data.name} | צעדים: ${data.steps}`;
+        }
+    } catch (e) { console.log("No yesterday data"); }
+}
     async function preloadDailyInfo() {
         const todayStr = new Date().toLocaleDateString('en-GB');
         try {
@@ -592,6 +600,7 @@ function toggleInstructions() {
 </script>
 </body>
 </html>
+
 
 
 
